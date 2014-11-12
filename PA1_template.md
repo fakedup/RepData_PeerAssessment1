@@ -1,0 +1,183 @@
+# Reproducible Research: Peer Assessment 1
+
+##Introduction
+
+The purpose of this assesment is to get familiar with tools of reproducible research, namely R Markdown and knitr-package. In order to do that some data is analysed below.
+Given dataset was get from a personal activity monitoring device. It consists of records for the numbers of steps taken in 5 minute intervals each day during October and November 2012.
+
+##Loading and preprocessing the data
+
+At first I check if file with data is unpacked and load the data.
+
+
+```r
+if (!file.exists("activity.csv")) {unzip("activity.zip")}
+
+activity <- read.table ("activity.csv", sep = ',', header = TRUE)
+```
+
+So, here it is:
+
+
+```r
+head (activity)
+```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
+```
+##What is mean total number of steps taken per day?
+
+For now missing values are ignored.
+I store sums of total steps taken during each day and make histogram.
+
+
+```r
+steps_by_day <- aggregate (steps~date, data=activity, sum)
+
+hist (steps_by_day$steps, main="Histogram of the daily total number of steps", xlab= "Daily total steps number", col="red", breaks = 12 )
+```
+
+![](./PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
+
+Here's the mean of total number of steps per day:
+
+
+```r
+mean (steps_by_day$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+And the median:
+
+
+```r
+median (steps_by_day$steps)
+```
+
+```
+## [1] 10765
+```
+
+##What is the average daily activity pattern?
+
+Here I calculate mean values for each time interval for overall period and make plot for this data.
+Missing values are still ignored.
+
+
+```r
+day_pattern <- aggregate (steps~interval, data=activity, mean, na.rm=TRUE)
+
+plot (day_pattern, type = "l", main = "Average daily activity pattern")
+```
+
+![](./PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
+
+That's 5-minute interval, containing the maximum number of steps on average:
+
+
+```r
+day_pattern$interval[which.max(day_pattern$steps)]
+```
+
+```
+## [1] 835
+```
+
+##Imputing missing values
+
+The total number of missing values in the dataset:
+
+
+```r
+sum(is.na(activity$steps))
+```
+
+```
+## [1] 2304
+```
+
+I copy initial dataset and replace all missing values of steps with average steps number for the same time interval for all period.
+
+
+```r
+complete <- activity
+
+for (i in 1:nrow(complete)){
+        if (is.na(complete$steps[i])){
+                complete$steps[i] <- day_pattern$steps[day_pattern$interval == complete$interval[i]]
+        }       
+}
+```
+
+Now I make the histogram of total steps per day for the complete dataset.
+
+
+```r
+steps_by_day_complete <- aggregate (steps~date, data=complete, sum)
+
+hist (steps_by_day_complete$steps, main="Total number of steps per day", xlab= "Daily total steps number", col="red", breaks = 12 )
+```
+
+![](./PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
+
+Here is new mean value:
+
+
+```r
+mean (steps_by_day_complete$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+And new median:
+
+
+```r
+median (steps_by_day_complete$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+We can see that the mean is absolutely same and median is just slightly shifted.
+
+##Are there differences in activity patterns between weekdays and weekends?
+
+First I need to transform dates into appropriate format.
+
+
+```r
+complete$date <- as.Date(complete$date)
+```
+
+Now I can make new factor variable with type of day:
+
+
+```r
+complete$day <- factor(ifelse(weekdays(complete$date) %in% c('Saturday','Sunday'), 'weekend', 'weekday'), levels = c('weekend','weekday'))
+```
+
+Further I calculate means for each day and interval and make plot for different types of days.
+
+
+```r
+pattern_by_day_type <- aggregate (steps~interval+day, data=complete, mean)
+
+library(lattice)
+xyplot(steps ~ interval|day, data = pattern_by_day_type, type = 'l', layout = c(1,2))
+```
+
+![](./PA1_template_files/figure-html/unnamed-chunk-15-1.png) 
