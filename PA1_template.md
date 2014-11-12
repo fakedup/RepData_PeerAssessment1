@@ -125,7 +125,7 @@ Now I make the histogram of total steps per day for the complete dataset.
 ```r
 steps_by_day_complete <- aggregate (steps~date, data=complete, sum)
 
-hist (steps_by_day_complete$steps, main="Total number of steps per day", xlab= "Daily total steps number", col="red", breaks = 12 )
+hist (steps_by_day_complete$steps, main="Histogram of the daily total number of steps", xlab= "Daily total steps number", col="red", breaks = 12 )
 ```
 
 ![](./PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
